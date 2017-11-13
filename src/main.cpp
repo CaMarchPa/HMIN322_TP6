@@ -18,8 +18,8 @@ int main(int argc, char const *argv[]) {
     int nbr_of_decomposition; // Nombre de décomposition
     int quality; // La qualité des images à décomposer
 
-    if (argc != 3) {
-		std::cout << "USAGE : ./main image.extension nbr_of_decomposition" << std::endl;
+    if (argc != 4) {
+		std::cout << "USAGE : ./main image.extension nbr_of_decomposition qualité entre 1 à 100" << std::endl;
 		return 1;
 	}
     img_read.load(argv[1]);
@@ -27,6 +27,10 @@ int main(int argc, char const *argv[]) {
     int width = img_read.width();
     std::stringstream convert(argv[2]);
     convert >> nbr_of_decomposition;
+    std::stringstream convert_(argv[3]);
+    convert_ >> quality;
+
+    quality+=(100-quality)*(double)((double)3/(double)5);
 
     //Changement d'espace de couleur RGB => YCrCb
     CImg<> img_Y(width, height, 1, 1);
@@ -61,7 +65,7 @@ int main(int argc, char const *argv[]) {
     int matrix_size = height;
     int matrix_of_coef[matrix_size][matrix_size];
     int step = log_2(height, nbr_of_decomposition);
-    float score = 0;
+    double score = 0;
     for (int j = 0; j < step; ++j)
         for (int i = 0; i < step; ++i)
             matrix_of_coef[j][i] = 1;
@@ -103,7 +107,7 @@ int main(int argc, char const *argv[]) {
                     tab_of_images[2][loop](half + i / 2, j / 2) = 128;
                 }
                 score = 0.8;
-                score *= (float)(nbr_of_decomposition + 4 - loop) / (float) (nbr_of_decomposition + 4);
+                score *= (double)(nbr_of_decomposition + 4 - loop) / (double) (nbr_of_decomposition + 4);
                 matrix_of_coef[j / 2][half + i / 2] = score + 1;
             }
 
@@ -183,9 +187,9 @@ int main(int argc, char const *argv[]) {
 
     for (int j = 0; j < matrix_size; j++) {
         for (int i = 0; i < matrix_size; i++) {
-            tab_of_images_rec[0][nbr_of_decomposition - 1](i, j) *= matrix_of_coef[j][i];
-            tab_of_images_rec[1][nbr_of_decomposition - 1](i, j) *= matrix_of_coef[j][i];
-            tab_of_images_rec[2][nbr_of_decomposition - 1](i, j) *= matrix_of_coef[j][i];
+            // tab_of_images_rec[0][nbr_of_decomposition - 1](i, j) *= matrix_of_coef[j][i];
+            // tab_of_images_rec[1][nbr_of_decomposition - 1](i, j) *= matrix_of_coef[j][i];
+            // tab_of_images_rec[2][nbr_of_decomposition - 1](i, j) *= matrix_of_coef[j][i];
         }
     }
 
@@ -196,24 +200,37 @@ int main(int argc, char const *argv[]) {
         std::cout << "height : " << height << ", half : " << half << '\n';
         for (int j = 0; j < height; j++) {
             for (int i = 0; i < height; i++) {
-                tab_of_images_rec[0][loop](2*i, 2*j) = tab_of_images_rec[0][loop + 1](i, j);
-                tab_of_images_rec[0][loop](2*i, 2*j+1) = tab_of_images_rec[0][loop + 1](i, j) + tab_of_images_rec[0][loop + 1](i + half, j);
-                tab_of_images_rec[0][loop](2*i+1, 2*j) = tab_of_images_rec[0][loop + 1](i, j) + tab_of_images_rec[0][loop + 1](i, j + half);
-                tab_of_images_rec[0][loop](2*i+1, 2*j+1) = tab_of_images_rec[0][loop + 1](i, j) + tab_of_images_rec[0][loop + 1](i + half, j + half);
+                // tab_of_images[0][loop](i/2, j/2) = ( tab_of_images[0][loop - 1](i, j) + tab_of_images[0][loop - 1](i, j + 1) + tab_of_images[0][loop - 1](i + 1, j) + tab_of_images[0][loop - 1](i + 1, j + 1) ) / 4;
+                tab_of_images_rec[0][loop](2*i, 2*j) = tab_of_images_rec[0][loop + 1](i, j)*4 - (tab_of_images[0][loop - 1](i*2, 2*j + 1) + tab_of_images[0][loop - 1](i*2 + 1, j*2) + tab_of_images[0][loop - 1](i*2 + 1, j*2 + 1));
+                tab_of_images_rec[0][loop](i*2, j*2 + 1) = tab_of_images_rec[0][loop + 1](i, j)*4 - ( tab_of_images[0][loop - 1](i*2, j*2) + tab_of_images[0][loop - 1](i*2 + 1, j*2) + tab_of_images[0][loop - 1](i*2 + 1, j*2 + 1));
+                // tab_of_images_rec[0][loop](2*i, 2*j+1) = tab_of_images_rec[0][loop + 1](i, j) + tab_of_images_rec[0][loop + 1](i + half, j);// + 128;
+                // tab_of_images_rec[0][loop](2*i+1, 2*j) = tab_of_images_rec[0][loop + 1](i, j) + tab_of_images_rec[0][loop + 1](i, j + half);// + 128;
+                tab_of_images_rec[0][loop](i*2 + 1, j*2) = tab_of_images_rec[0][loop + 1](i, j)*4 - ( tab_of_images[0][loop - 1](i*2, j*2) + tab_of_images[0][loop - 1](i*2, j*2 + 1) + tab_of_images[0][loop - 1](i*2 + 1, j*2 + 1));
+                // tab_of_images_rec[0][loop](2*i+1, 2*j+1) = tab_of_images_rec[0][loop + 1](i, j) + tab_of_images_rec[0][loop + 1](i + half, j + half);// + 128;
+                tab_of_images_rec[0][loop](i*2 + 1, j*2 + 1) = tab_of_images_rec[0][loop + 1](i, j)*4 - ( tab_of_images[0][loop - 1](i*2, j*2) + tab_of_images[0][loop - 1](i*2 + 1, j*2));
                 //Cr
                 tab_of_images_rec[1][loop](2*i, 2*j) = tab_of_images_rec[1][loop + 1](i, j);
-                tab_of_images_rec[1][loop](2*i, 2*j+1) = tab_of_images_rec[1][loop + 1](i, j) + tab_of_images_rec[1][loop + 1](i + half, j) ;
-                tab_of_images_rec[1][loop](2*i+1, 2*j) = tab_of_images_rec[1][loop + 1](i, j) + tab_of_images_rec[1][loop + 1](i, j + half) ;
-                tab_of_images_rec[1][loop](2*i+1, 2*j+1) = tab_of_images_rec[1][loop + 1](i, j) + tab_of_images_rec[1][loop + 1](i + half, j + half);
+                tab_of_images_rec[1][loop](2*i, 2*j+1) = tab_of_images_rec[1][loop + 1](i, j) + tab_of_images_rec[1][loop + 1](i + half, j);// + 128;
+                tab_of_images_rec[1][loop](2*i+1, 2*j) = tab_of_images_rec[1][loop + 1](i, j) + tab_of_images_rec[1][loop + 1](i, j + half);// + 128;
+                tab_of_images_rec[1][loop](2*i+1, 2*j+1) = tab_of_images_rec[1][loop + 1](i, j) + tab_of_images_rec[1][loop + 1](i + half, j + half);// + 128;
                 //Cb
                 tab_of_images_rec[2][loop](2*i, 2*j) = tab_of_images_rec[2][loop + 1](i, j);
-                tab_of_images_rec[2][loop](2*i, 2*j+1) = tab_of_images_rec[2][loop + 1](i, j) + tab_of_images_rec[2][loop + 1](i + half, j);
-                tab_of_images_rec[2][loop](2*i+1, 2*j) = tab_of_images_rec[2][loop + 1](i, j) + tab_of_images_rec[2][loop + 1](i, j + half);
-                tab_of_images_rec[2][loop](2*i+1, 2*j+1) = tab_of_images_rec[2][loop + 1](i, j) + tab_of_images_rec[2][loop + 1](i + half, j + half);
+                tab_of_images_rec[2][loop](2*i, 2*j+1) = tab_of_images_rec[2][loop + 1](i, j) + tab_of_images_rec[2][loop + 1](i + half, j);// + 128;
+                tab_of_images_rec[2][loop](2*i+1, 2*j) = tab_of_images_rec[2][loop + 1](i, j) + tab_of_images_rec[2][loop + 1](i, j + half);// + 128;
+                tab_of_images_rec[2][loop](2*i+1, 2*j+1) = tab_of_images_rec[2][loop + 1](i, j) + tab_of_images_rec[2][loop + 1](i + half, j + half);// + 128;
             }
         }
     }
+
     //
+    char rec_y[30] = "../img/result_rec_y.png";
+    char rec_r[30] = "../img/result_rec_r.png";
+    char rec_b[30] = "../img/result_rec_b.png";
+
+    tab_of_images_rec[0][0].save_png(rec_y);
+    tab_of_images_rec[1][0].save_png(rec_r);
+    tab_of_images_rec[2][0].save_png(rec_b);
+
     char result_f[30] = "../img/result_rgb.png";
     // // RECONSTRUCTION
     CImg<> result_rec_img(matrix_size, matrix_size, 1, 3);
@@ -230,6 +247,6 @@ int main(int argc, char const *argv[]) {
     img_read = img_read.YCbCrtoRGB();
     double psnr = img_read.PSNR(result_rec_img);
     std::cout << "PSNR = " << psnr << '\n';
-    std::cout << " E N D " << std::endl;
+    // std::cout << " E N D " << std::endl;
     return 0;
 }
