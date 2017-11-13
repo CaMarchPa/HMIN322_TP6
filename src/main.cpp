@@ -32,12 +32,12 @@ int main(int argc, char const *argv[]) {
     CImg<> img_Y(width, height, 1, 1);
     CImg<> img_Cb(width, height, 1, 1);
     CImg<> img_Cr(width, height, 1, 1);
-
+    img_read.RGBtoYCbCr();
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {
-            img_Y(i, j, 0) = 0.3 * img_read(i, j, 0, 0) + 0.6 * img_read(i, j, 0, 1) + 0.1 * img_read(i, j, 2);
-            img_Cb(i, j, 0) = -0.1687 * img_read(i, j, 0, 0) - 0.3313 * img_read(i, j, 0, 1) + 0.5 * img_read(i, j, 0, 2) + 128;
-            img_Cr(i, j, 0) = 0.5 * img_read(i, j, 0, 0) - 0.4187 * img_read(i, j, 0, 1) - 0.0813 * img_read(i, j, 0, 2) + 128;
+            img_Y(i, j, 0) = img_read(i, j, 0, 0);//0.3 * img_read(i, j, 0, 0) + 0.6 * img_read(i, j, 0, 1) + 0.1 * img_read(i, j, 2);
+            img_Cb(i, j, 0) = img_read(i, j, 0, 1);//-0.1687 * img_read(i, j, 0, 0) - 0.3313 * img_read(i, j, 0, 1) + 0.5 * img_read(i, j, 0, 2) + 128;
+            img_Cr(i, j, 0) = img_read(i, j, 0, 2);//0.5 * img_read(i, j, 0, 0) - 0.4187 * img_read(i, j, 0, 1) - 0.0813 * img_read(i, j, 0, 2) + 128;
         }
     }
     //Sauvegarde des images
@@ -225,8 +225,9 @@ int main(int argc, char const *argv[]) {
         }
     }
     //
-    result_rec_img = result_rec_img.get_RGBtoYCbCr();
+    result_rec_img = result_rec_img.YCbCrtoRGB();
     result_rec_img.save_png(result_f);
+    img_read = img_read.YCbCrtoRGB();
     double psnr = img_read.PSNR(result_rec_img);
     std::cout << "PSNR = " << psnr << '\n';
     std::cout << " E N D " << std::endl;
